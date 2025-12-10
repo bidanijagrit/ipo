@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>IPO MINT — </title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#0f1724; --card:#0b1220; --muted:#9aa4b2; --accent:#06b6d4;
+      --success:#10b981; --danger:#ef4444; --glass:rgba(255,255,255,0.04);
+    }
+    *{box-sizing:border-box;font-family:"Inter",sans-serif;}
+    body{margin:0;background:#071522;color:#eaf1f9;padding:28px;min-height:100vh;}
+
+    header{display:flex;align-items:center;gap:16px;margin-bottom:20px;}
+    .logo{width:50px;height:50px;background:linear-gradient(135deg,#ffd46b,#ff7b18);
+      display:flex;align-items:center;justify-content:center;font-weight:700;
+      border-radius:12px;color:#111;}
+    h1{margin:0;font-size:22px}
+    .lead{color:var(--muted);margin:0;font-size:13px}
+
+    .controls{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px}
+    input,select{
+      background:var(--glass);border:1px solid rgba(255,255,255,0.08);
+      padding:10px 12px;border-radius:10px;color:#eaf1f9;font-size:14px;
+    }
+    input{flex:1;min-width:220px}
+    select{min-width:160px}
+
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));
+      gap:14px;margin-top:22px}
+    .card{
+      background:linear-gradient(180deg,rgba(255,255,255,0.03),transparent);
+      padding:16px;border-radius:12px;
+      border:1px solid rgba(255,255,255,0.05);
+    }
+    .row{display:flex;justify-content:space-between;align-items:flex-start;}
+    .ipo-title{font-size:17px;font-weight:600;}
+    .muted{color:var(--muted);font-size:13px;}
+
+    .gmp{padding:6px 10px;border-radius:8px;font-weight:700;}
+    .gmp.positive{color:var(--success);background:rgba(16,185,129,0.12);
+      border:1px solid rgba(16,185,129,0.22)}
+    .gmp.negative{color:var(--danger);background:rgba(239,68,68,0.12);
+      border:1px solid rgba(239,68,68,0.22)}
+    .gmp.neutral{color:var(--muted);background:rgba(255,255,255,0.05)}
+
+    .pill{
+      background:rgba(255,255,255,0.06);padding:6px 8px;border-radius:8px;
+      color:var(--muted);font-size:13px;
+    }
+    .meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+
+    .details-btn{
+      background:transparent;border:1px solid rgba(255,255,255,0.08);
+      padding:8px 12px;border-radius:7px;color:var(--accent);
+      cursor:pointer;font-size:13px;
+    }
+
+    .modal-backdrop{
+      position:fixed;inset:0;background:rgba(0,0,0,0.6);
+      display:none;align-items:center;justify-content:center;
+      padding:20px;z-index:20;
+    }
+    .modal{background:#0c1424;padding:20px;border-radius:12px;
+      max-width:760px;width:100%;border:1px solid rgba(255,255,255,0.05)}
+  </style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">MINT</div>
+  <div>
+    <h1>IPO MINT</h1>
+    <p class="lead">Live GMP + Recent IPOs</p>
+  </div>
+</header>
+
+<div class="controls">
+  <input id="search" placeholder="Search by company or symbol...">
+  <select id="statusFilter">
+    <option value="all">Status: All</option>
+    <option value="open">Open</option>
+    <option value="closed">Closed</option>
+  </select>
+</div>
+
+<div id="list" class="grid"></div>
+<p id="empty" style="display:none;color:var(--muted);margin-top:20px">No IPO found.</p>
+
+<!-- Modal -->
+<div id="modalBackdrop" class="modal-backdrop">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h2 id="modalTitle" style="margin:0"></h2>
+      <button id="closeModal" class="details-btn">Close ✕</button>
+    </div>
+    <p id="modalSubtitle" class="muted"></p>
+
+    <div id="modalBody" style="margin-top:14px;font-size:14px;line-height:1.5"></div>
+  </div>
+</div>
+
+
+<script>
+const ipos = [
+  {
+    id:1,
+    name:"Park Medi World Ltd",
+    symbol:"PMWL",
+    exchange:"NSE",
+    status:"open",
+    issue_start:"2025-12-10",
+    issue_end:"2025-12-12",
+    price_band:"₹154 – ₹162",
+    lot_size:92,
+    issue_size:"₹920 Cr",
+    gmp:14,
+    allot_date:"15 Dec 2025",
+    listing_date:"17 Dec 2025",
+    description:"Park Medi World Ltd is entering the market with a healthcare expansion plan and diagnostic services."
+  },
+
+  {
+    id:2,
+    name:"Nephrocare Health Services Ltd",
+    symbol:"NEPHRO",
+    exchange:"NSE",
+    status:"open",
+    issue_start:"2025-12-10",
+    issue_end:"2025-12-12",
+    price_band:"₹438 – ₹460",
+    lot_size:32,
+    issue_size:"₹871.05 Cr",
+    gmp:0,
+    allot_date:"15 Dec 2025",
+    listing_date:"17 Dec 2025",
+    description:"Nephrocare Health Services Ltd provides kidney care and dialysis services across India."
+  },
+
+  /* ⭐ CLOSED IPO — Meesho */
+  {
+    id:3,
+    name:"Meesho Ltd",
+    symbol:"MEESHO",
+    exchange:"NSE",
+    status:"closed",
+    issue_start:"2025-12-03",
+    issue_end:"2025-12-05",
+    price_band:"₹105 – ₹111",
+    lot_size:135,
+    issue_size:"₹5421.20 Cr",
+    gmp:42,
+    allot_date:"8 Dec 2025",
+    listing_date:"10 Dec 2025",
+    listing_price:"₹162.50",
+    description:"Meesho Ltd is an e-commerce company focusing on small-business enablement and social commerce."
+  }
+];
+
+function gmpClass(v){
+  if(v === 0) return "gmp neutral";
+  return v > 0 ? "gmp positive" : "gmp negative";
+}
+
+function render(){
+  const q = document.getElementById("search").value.toLowerCase();
+  const st = document.getElementById("statusFilter").value;
+
+  let filtered = ipos.filter(i=>{
+    if(st!=="all" && i.status!==st) return false;
+    return i.name.toLowerCase().includes(q) || i.symbol.toLowerCase().includes(q);
+  });
+
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+
+  if(filtered.length===0){
+    document.getElementById("empty").style.display="block";
+    return;
+  } else document.getElementById("empty").style.display="none";
+
+  filtered.forEach(i=>{
+    const el = document.createElement("div");
+    el.className="card";
+    el.innerHTML = `
+      <div class="row">
+        <div>
+          <div class="ipo-title">${i.name} <span class="muted">(${i.symbol})</span></div>
+          <div class="muted" style="margin-top:6px">${i.exchange} • Issue: ${i.issue_start} — ${i.issue_end}</div>
+        </div>
+        <div>
+          <div class="${gmpClass(i.gmp)}">${i.gmp>=0? '+'+i.gmp:i.gmp} GMP</div>
+          <div class="muted" style="margin-top:6px">${i.price_band}</div>
+        </div>
+      </div>
+
+      <div class="meta">
+        <div class="pill">Lot: ${i.lot_size}</div>
+        <div class="pill">Issue Size: ${i.issue_size}</div>
+      </div>
+
+      <div style="margin-top:14px;display:flex;justify-content:space-between;align-items:center;">
+        <div class="muted" style="width:70%">${i.description.slice(0,70)}...</div>
+        <button class="details-btn" onclick="openModal(${i.id})">Details</button>
+      </div>
+    `;
+    list.appendChild(el);
+  });
+}
+
+function openModal(id){
+  const i = ipos.find(x=>x.id===id);
+  document.getElementById("modalTitle").textContent = i.name;
+  document.getElementById("modalSubtitle").textContent = `${i.symbol} • ${i.exchange}`;
+
+  document.getElementById("modalBody").innerHTML = `
+    <div><strong>Issue Period:</strong> ${i.issue_start} — ${i.issue_end}</div>
+    <div><strong>Price Band:</strong> ${i.price_band}</div>
+    <div><strong>Lot Size:</strong> ${i.lot_size}</div>
+    <div><strong>Issue Size:</strong> ${i.issue_size}</div>
+    <div><strong>Allotment Date:</strong> ${i.allot_date}</div>
+    <div><strong>Listing Date:</strong> ${i.listing_date}</div>
+    ${i.listing_price ? `<div><strong>Listing Price:</strong> ${i.listing_price}</div>` : ""}
+    <div style="margin-top:10px"><strong>Description:</strong> ${i.description}</div>
+  `;
+
+  document.getElementById("modalBackdrop").style.display = "flex";
+}
+
+document.getElementById("closeModal").onclick = ()=>{
+  document.getElementById("modalBackdrop").style.display="none";
+};
+document.getElementById("statusFilter").onchange = render;
+document.getElementById("search").oninput = render;
+
+render();
+</script>
+
+</body>
+</html>
