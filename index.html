@@ -4,84 +4,71 @@
 <meta charset="UTF-8">
 <title>IPO JSS – Admin Panel</title>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js"></script>
+<!-- Firebase v8 SDK (REQUIRED) -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <style>
 body{
- font-family: 'Segoe UI', sans-serif;
- background:#0f172a;
- color:#fff;
- margin:0;
- padding:20px;
+  font-family:'Segoe UI',sans-serif;
+  background:#0f172a;
+  color:#fff;
+  margin:0;
+  padding:20px;
 }
-h1{
- text-align:center;
- margin-bottom:5px;
-}
-.tagline{
- text-align:center;
- color:#94a3b8;
- margin-bottom:30px;
-}
+h1{text-align:center;margin-bottom:5px}
+.tagline{text-align:center;color:#94a3b8;margin-bottom:30px}
 .container{
- max-width:1100px;
- margin:auto;
- display:grid;
- grid-template-columns:1fr 1fr;
- gap:20px;
+  max-width:1100px;
+  margin:auto;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:20px;
 }
 .card{
- background:#020617;
- padding:20px;
- border-radius:14px;
- box-shadow:0 10px 30px rgba(0,0,0,.4);
+  background:#020617;
+  padding:20px;
+  border-radius:14px;
+  box-shadow:0 10px 30px rgba(0,0,0,.4);
 }
 .card h2{
- margin-top:0;
- border-bottom:1px solid #1e293b;
- padding-bottom:10px;
+  margin-top:0;
+  border-bottom:1px solid #1e293b;
+  padding-bottom:10px;
 }
-input, select, textarea{
- width:100%;
- padding:10px;
- margin:8px 0;
- border-radius:8px;
- border:none;
- outline:none;
- background:#020617;
- color:white;
- border:1px solid #1e293b;
+input,select{
+  width:100%;
+  padding:10px;
+  margin:8px 0;
+  border-radius:8px;
+  border:1px solid #1e293b;
+  background:#020617;
+  color:#fff;
 }
 button{
- background:#22c55e;
- color:#020617;
- padding:12px;
- width:100%;
- border:none;
- border-radius:10px;
- font-weight:600;
- cursor:pointer;
- margin-top:10px;
+  background:#22c55e;
+  color:#020617;
+  padding:12px;
+  width:100%;
+  border:none;
+  border-radius:10px;
+  font-weight:600;
+  cursor:pointer;
 }
 button:hover{opacity:.9}
 .ipo{
- background:#020617;
- border:1px solid #1e293b;
- padding:12px;
- border-radius:10px;
- margin-bottom:10px;
+  background:#020617;
+  border:1px solid #1e293b;
+  padding:12px;
+  border-radius:10px;
+  margin-bottom:10px;
 }
 .ipo small{color:#94a3b8}
 .actions button{
- background:#38bdf8;
- margin-top:8px;
+  background:#38bdf8;
+  margin-top:6px;
 }
-.del{
- background:#ef4444 !important;
- color:white;
-}
+.del{background:#ef4444!important;color:#fff}
 </style>
 </head>
 
@@ -96,12 +83,12 @@ button:hover{opacity:.9}
 <div class="card">
 <h2>Add / Update IPO</h2>
 
-<input id="key" placeholder="IPO Key (unique id e.g. parkmedi)">
+<input id="key" placeholder="IPO Key (e.g. parkmedi)">
 <input id="name" placeholder="IPO Name">
 <select id="status">
- <option value="open">Open</option>
- <option value="closed">Closed</option>
- <option value="upcoming">Upcoming</option>
+  <option value="open">Open</option>
+  <option value="closed">Closed</option>
+  <option value="upcoming">Upcoming</option>
 </select>
 <input id="dates" placeholder="IPO Dates">
 <input id="price" placeholder="Price Band">
@@ -123,114 +110,83 @@ button:hover{opacity:.9}
 </div>
 
 <script>
-/* 🔥 PASTE YOUR FIREBASE CONFIG HERE */
-const firebaseConfig = {
- apiKey: "AIzaSyAmXdzV3LDUe7CF0cHBKa6KD2vcPwZudCM",
- authDomain: "ipo-jss.firebaseapp.com",
- databaseURL: "https://ipo-jss-default-rtdb.firebaseio.com",
- projectId: "ipo-jss",
- storageBucket: "ipo-jss.firebasestorage.app",
- messagingSenderId: "891300046260",
- appId: "1:891300046260:web:bb76b822b506f02cfb7ee1"
+/* 🔥 FIREBASE CONFIG (ONLY ONCE) */
+var firebaseConfig = {
+  apiKey: "AIzaSyAmXdzV3LDUe7CF0cHBKa6KD2vcPwZudCM",
+  authDomain: "ipo-jss.firebaseapp.com",
+  databaseURL: "https://ipo-jss-default-rtdb.firebaseio.com",
+  projectId: "ipo-jss",
+  storageBucket: "ipo-jss.firebasestorage.app",
+  messagingSenderId: "891300046260",
+  appId: "1:891300046260:web:bb76b822b506f02cfb7ee1"
 };
 
 firebase.initializeApp(firebaseConfig);
-const db = firebase.database().ref("ipos");
+var db = firebase.database().ref("ipos");
 
-/* SAVE / UPDATE */
+/* ✅ SAVE / UPDATE IPO */
 function saveIPO(){
- const k = key.value;
- if(!k){alert("IPO Key required");return;}
+  const k = key.value.trim().toLowerCase();
+  if(!k){ alert("IPO Key required"); return; }
 
- db.child(k).set({
-  name: name.value,
-  status: status.value,
-  dates: dates.value,
-  price_band: price.value,
-  lot_size: lot.value,
-  issue_size: issue.value,
-  gmp: gmp.value,
-  listing_date: listing.value,
-  allotment_link: allot.value,
-  updated: new Date().toISOString()
- });
- alert("Saved Successfully");
+  db.child(k).set({
+    name: name.value,
+    status: status.value,
+    dates: dates.value,
+    price_band: price.value,
+    lot_size: lot.value,
+    issue_size: issue.value,
+    gmp: gmp.value,
+    listing_date: listing.value,
+    allotment_link: allot.value,
+    updated: new Date().toISOString()
+  })
+  .then(()=>alert("✅ IPO Saved Successfully"))
+  .catch(e=>alert("❌ " + e.message));
 }
 
-/* LOAD */
+/* LOAD IPO LIST */
 db.on("value", snap=>{
- list.innerHTML="";
- snap.forEach(c=>{
-  const i=c.val();
-  list.innerHTML+=`
-  <div class="ipo">
-   <b>${i.name}</b><br>
-   <small>Status: ${i.status} | GMP: ₹${i.gmp}</small>
-   <div class="actions">
-    <button onclick="edit('${c.key}')">Edit</button>
-    <button class="del" onclick="del('${c.key}')">Delete</button>
-   </div>
-  </div>
-  `;
- });
+  list.innerHTML="";
+  snap.forEach(c=>{
+    const i=c.val();
+    list.innerHTML+=`
+      <div class="ipo">
+        <b>${i.name}</b><br>
+        <small>Status: ${i.status} | GMP: ₹${i.gmp}</small>
+        <div class="actions">
+          <button onclick="editIPO('${c.key}')">Edit</button>
+          <button class="del" onclick="deleteIPO('${c.key}')">Delete</button>
+        </div>
+      </div>
+    `;
+  });
 });
 
-/* EDIT */
-function edit(k){
- db.child(k).once("value",s=>{
-  const i=s.val();
-  key.value=k;
-  name.value=i.name;
-  status.value=i.status;
-  dates.value=i.dates;
-  price.value=i.price_band;
-  lot.value=i.lot_size;
-  issue.value=i.issue_size;
-  gmp.value=i.gmp;
-  listing.value=i.listing_date;
-  allot.value=i.allotment_link;
- });
+/* EDIT IPO */
+function editIPO(k){
+  db.child(k).once("value",s=>{
+    const i=s.val();
+    key.value=k;
+    name.value=i.name;
+    status.value=i.status;
+    dates.value=i.dates;
+    price.value=i.price_band;
+    lot.value=i.lot_size;
+    issue.value=i.issue_size;
+    gmp.value=i.gmp;
+    listing.value=i.listing_date;
+    allot.value=i.allotment_link;
+  });
 }
 
-/* DELETE */
-function del(k){
- if(confirm("Delete IPO?")){
-  db.child(k).remove();
- }
-}
-</script><script>
-function saveIPO() {
-  const key = document.getElementById("key").value
-    .trim()
-    .toLowerCase();
-
-  if (!key) {
-    alert("IPO Key required");
-    return;
+/* DELETE IPO */
+function deleteIPO(k){
+  if(confirm("Delete this IPO?")){
+    db.child(k).remove();
   }
-
-  const data = {
-    name: document.getElementById("name").value,
-    status: document.getElementById("status").value,
-    dates: document.getElementById("dates").value,
-    price_band: document.getElementById("price").value,
-    lot_size: document.getElementById("lot").value,
-    issue_size: document.getElementById("issue").value,
-    gmp: document.getElementById("gmp").value,
-    listing_date: document.getElementById("listing").value,
-    allotment_link: document.getElementById("allot").value
-  };
-
-  firebase.database()
-    .ref("ipos/" + key)
-    .set(data)
-    .then(() => {
-      alert("✅ IPO Saved");
-    })
-    .catch(err => {
-      alert("❌ Error: " + err.message);
-    });
 }
 </script>
+
 </body>
 </html>
