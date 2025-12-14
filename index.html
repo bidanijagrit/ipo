@@ -1,192 +1,245 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="hi">
 <head>
-<meta charset="UTF-8">
-<title>IPO JSS – Admin Panel</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IPO JSS — Trade GMP. Trade Smart</title>
 
-<!-- Firebase v8 SDK (REQUIRED) -->
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
 <style>
-body{
-  font-family:'Segoe UI',sans-serif;
-  background:#0f172a;
-  color:#fff;
-  margin:0;
-  padding:20px;
+:root{
+ --bg:#071522; --card:#0c1628; --muted:#9aa4b2;
+ --accent:#22d3ee; --success:#10b981; --danger:#ef4444;
 }
-h1{text-align:center;margin-bottom:5px}
-.tagline{text-align:center;color:#94a3b8;margin-bottom:30px}
-.container{
-  max-width:1100px;
-  margin:auto;
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:20px;
+*{box-sizing:border-box;font-family:Inter,sans-serif}
+body{margin:0;background:var(--bg);color:#eaf1f9;padding:26px}
+
+header{display:flex;gap:16px;align-items:center;margin-bottom:22px}
+.logo{
+ width:54px;height:54px;border-radius:14px;
+ background:linear-gradient(135deg,#22d3ee,#3b82f6);
+ display:flex;align-items:center;justify-content:center;
+ font-weight:800;color:#031e2b
 }
-.card{
-  background:#020617;
-  padding:20px;
-  border-radius:14px;
-  box-shadow:0 10px 30px rgba(0,0,0,.4);
-}
-.card h2{
-  margin-top:0;
-  border-bottom:1px solid #1e293b;
-  padding-bottom:10px;
-}
+h1{margin:0;font-size:24px}
+.lead{margin:4px 0 0;color:var(--muted);font-size:14px}
+
+.controls{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px}
 input,select{
-  width:100%;
-  padding:10px;
-  margin:8px 0;
-  border-radius:8px;
-  border:1px solid #1e293b;
-  background:#020617;
-  color:#fff;
+ background:rgba(255,255,255,.06);
+ border:1px solid rgba(255,255,255,.1);
+ padding:11px 14px;border-radius:12px;
+ color:#fff;font-size:14px
 }
-button{
-  background:#22c55e;
-  color:#020617;
-  padding:12px;
-  width:100%;
-  border:none;
-  border-radius:10px;
-  font-weight:600;
-  cursor:pointer;
+input{flex:1}
+
+.grid{
+ display:grid;
+ grid-template-columns:repeat(auto-fill,minmax(360px,1fr));
+ gap:18px;margin-top:26px
 }
-button:hover{opacity:.9}
-.ipo{
-  background:#020617;
-  border:1px solid #1e293b;
-  padding:12px;
-  border-radius:10px;
-  margin-bottom:10px;
+
+.card{
+ background:linear-gradient(180deg,rgba(255,255,255,.06),transparent);
+ border:1px solid rgba(255,255,255,.08);
+ padding:18px;border-radius:16px
 }
-.ipo small{color:#94a3b8}
-.actions button{
-  background:#38bdf8;
-  margin-top:6px;
+
+.row{display:flex;justify-content:space-between;gap:12px}
+.ipo-title{font-size:18px;font-weight:600}
+.muted{color:var(--muted);font-size:13px}
+
+.badge{
+ padding:6px 10px;border-radius:10px;
+ font-size:12px;font-weight:600
 }
-.del{background:#ef4444!important;color:#fff}
+.open{background:rgba(16,185,129,.15);color:var(--success)}
+.closed{background:rgba(239,68,68,.15);color:var(--danger)}
+
+.gmp{
+ margin-top:10px;display:inline-block;
+ padding:7px 12px;border-radius:10px;
+ font-weight:700
+}
+.pos{color:var(--success);background:rgba(16,185,129,.15)}
+.neu{color:var(--muted);background:rgba(255,255,255,.06)}
+
+.table{
+ margin-top:14px;
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:10px;font-size:13px
+}
+.table div span{color:var(--muted)}
+
+.action{
+ margin-top:16px;
+ display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end
+}
+
+.btn{
+ padding:9px 14px;border-radius:10px;
+ border:1px solid rgba(255,255,255,.15);
+ background:transparent;color:var(--accent);
+ cursor:pointer;font-size:13px
+}
+.btn.wait{
+ color:var(--muted);
+ cursor:not-allowed;
+}
+.btn.allot{
+ border-color:rgba(34,211,238,.4);
+}
+
+/* MODAL */
+.backdrop{
+ position:fixed;inset:0;
+ background:rgba(0,0,0,.6);
+ display:none;align-items:center;justify-content:center;
+ padding:20px;z-index:20
+}
+.modal{
+ background:#0c1628;
+ padding:22px;border-radius:16px;
+ max-width:720px;width:100%;
+ border:1px solid rgba(255,255,255,.1)
+}
 </style>
 </head>
 
 <body>
 
-<h1>IPO JSS – Admin Panel</h1>
-<div class="tagline">Trade GMP. Trade Smart</div>
+<header>
+ <div class="logo">JSS</div>
+ <div>
+  <h1>IPO JSS</h1>
+  <p class="lead">Trade GMP. Trade Smart</p>
+ </div>
+</header>
 
-<div class="container">
-
-<!-- ADD / UPDATE IPO -->
-<div class="card">
-<h2>Add / Update IPO</h2>
-
-<input id="key" placeholder="IPO Key (e.g. parkmedi)">
-<input id="name" placeholder="IPO Name">
-<select id="status">
+<div class="controls">
+ <input id="search" placeholder="Search IPO name">
+ <select id="status">
+  <option value="all">All IPOs</option>
   <option value="open">Open</option>
   <option value="closed">Closed</option>
-  <option value="upcoming">Upcoming</option>
-</select>
-<input id="dates" placeholder="IPO Dates">
-<input id="price" placeholder="Price Band">
-<input id="lot" placeholder="Lot Size">
-<input id="issue" placeholder="Issue Size">
-<input id="gmp" placeholder="GMP">
-<input id="listing" placeholder="Listing Date">
-<input id="allot" placeholder="Allotment Link">
-
-<button onclick="saveIPO()">Save / Update IPO</button>
+ </select>
 </div>
 
-<!-- IPO LIST -->
-<div class="card">
-<h2>All IPOs</h2>
-<div id="list"></div>
-</div>
+<div id="list" class="grid"></div>
 
+<!-- MODAL -->
+<div id="backdrop" class="backdrop">
+ <div class="modal">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+   <h2 id="mTitle"></h2>
+   <button class="btn" onclick="closeModal()">Close</button>
+  </div>
+  <div id="mBody" style="margin-top:14px;font-size:14px;line-height:1.6"></div>
+ </div>
 </div>
 
 <script>
-/* 🔥 FIREBASE CONFIG (ONLY ONCE) */
-var firebaseConfig = {
-  apiKey: "AIzaSyAmXdzV3LDUe7CF0cHBKa6KD2vcPwZudCM",
-  authDomain: "ipo-jss.firebaseapp.com",
-  databaseURL: "https://ipo-jss-default-rtdb.firebaseio.com",
-  projectId: "ipo-jss",
-  storageBucket: "ipo-jss.firebasestorage.app",
-  messagingSenderId: "891300046260",
-  appId: "1:891300046260:web:bb76b822b506f02cfb7ee1"
-};
+const list = document.getElementById("list");
+const search = document.getElementById("search");
+const status = document.getElementById("status");
+const backdrop = document.getElementById("backdrop");
+const mTitle = document.getElementById("mTitle");
+const mBody = document.getElementById("mBody");
 
-firebase.initializeApp(firebaseConfig);
-var db = firebase.database().ref("ipos");
+const ipos=[
+{
+ id:1,name:"Park Medi World Ltd",symbol:"PMWL",exchange:"NSE",
+ status:"open",issue_start:"10 Dec 2025",issue_end:"12 Dec 2025",
+ price_band:"₹154 – ₹162",lot_size:92,issue_size:"₹920 Cr",
+ gmp:14,description:"Healthcare focused IPO with expansion plans."
+},
+{
+ id:2,name:"Nephrocare Health Services Ltd",symbol:"NEPHRO",exchange:"NSE",
+ status:"open",issue_start:"10 Dec 2025",issue_end:"12 Dec 2025",
+ price_band:"₹438 – ₹460",lot_size:32,issue_size:"₹871.05 Cr",
+ gmp:0,description:"Dialysis and kidney-care services provider across India."
+},
+{
+ id:3,name:"Meesho Ltd",symbol:"MEESHO",exchange:"NSE",
+ status:"closed",issue_start:"3 Dec 2025",issue_end:"5 Dec 2025",
+ price_band:"₹105 – ₹111",lot_size:135,issue_size:"₹5421 Cr",
+ gmp:42,description:"Social commerce platform enabling small sellers."
+},{
+ id:3,name:"ICICI Prudential Asset Management Co. Ltd",symbol:"ICICI",exchange:"NSE",
+ status:"open",issue_start:"12 Dec 2025",issue_end:"16 Dec 2025",
+ price_band:"₹2061 – ₹2165",lot_size:06,issue_size:"₹10602.65 Cr",
+ gmp:292,description:" ICICI Prudential Asset Manangement leading indian investment manager."
+}
+];
 
-/* ✅ SAVE / UPDATE IPO */
-function saveIPO(){
-  const k = key.value.trim().toLowerCase();
-  if(!k){ alert("IPO Key required"); return; }
+function render(){
+ list.innerHTML="";
+ const q = search.value.toLowerCase();
+ const st = status.value;
 
-  db.child(k).set({
-    name: name.value,
-    status: status.value,
-    dates: dates.value,
-    price_band: price.value,
-    lot_size: lot.value,
-    issue_size: issue.value,
-    gmp: gmp.value,
-    listing_date: listing.value,
-    allotment_link: allot.value,
-    updated: new Date().toISOString()
-  })
-  .then(()=>alert("✅ IPO Saved Successfully"))
-  .catch(e=>alert("❌ " + e.message));
+ ipos.filter(i=>{
+  if(st!=="all" && i.status!==st) return false;
+  return i.name.toLowerCase().includes(q);
+ }).forEach(i=>{
+  const c=document.createElement("div");
+  c.className="card";
+  c.innerHTML=`
+   <div class="row">
+    <div>
+     <div class="ipo-title">${i.name}</div>
+     <div class="muted">${i.symbol} • ${i.exchange}</div>
+    </div>
+    <span class="badge ${i.status}">${i.status.toUpperCase()}</span>
+   </div>
+
+   <div class="gmp ${i.gmp>0?'pos':'neu'}">GMP ${i.gmp>=0?'+':''}${i.gmp}</div>
+
+   <div class="table">
+    <div><span>Issue Date:</span><br>${i.issue_start} – ${i.issue_end}</div>
+    <div><span>Price Band:</span><br>${i.price_band}</div>
+    <div><span>Lot Size:</span><br>${i.lot_size}</div>
+    <div><span>Issue Size:</span><br>${i.issue_size}</div>
+   </div>
+
+   <div class="action">
+    <button class="btn" onclick="openModal(${i.id})">Details</button>
+    ${
+      i.status==="open"
+      ? `<button class="btn wait" disabled>Waiting for Allotment</button>`
+      : `<button class="btn allot" onclick="checkAllotment()">Check Allotment</button>`
+    }
+   </div>
+  `;
+  list.appendChild(c);
+ });
 }
 
-/* LOAD IPO LIST */
-db.on("value", snap=>{
-  list.innerHTML="";
-  snap.forEach(c=>{
-    const i=c.val();
-    list.innerHTML+=`
-      <div class="ipo">
-        <b>${i.name}</b><br>
-        <small>Status: ${i.status} | GMP: ₹${i.gmp}</small>
-        <div class="actions">
-          <button onclick="editIPO('${c.key}')">Edit</button>
-          <button class="del" onclick="deleteIPO('${c.key}')">Delete</button>
-        </div>
-      </div>
-    `;
-  });
-});
-
-/* EDIT IPO */
-function editIPO(k){
-  db.child(k).once("value",s=>{
-    const i=s.val();
-    key.value=k;
-    name.value=i.name;
-    status.value=i.status;
-    dates.value=i.dates;
-    price.value=i.price_band;
-    lot.value=i.lot_size;
-    issue.value=i.issue_size;
-    gmp.value=i.gmp;
-    listing.value=i.listing_date;
-    allot.value=i.allotment_link;
-  });
+function checkAllotment(){
+ window.open("https://ipoallotment.example.com","_blank");
 }
 
-/* DELETE IPO */
-function deleteIPO(k){
-  if(confirm("Delete this IPO?")){
-    db.child(k).remove();
-  }
+function openModal(id){
+ const i = ipos.find(x=>x.id===id);
+ mTitle.textContent = i.name;
+ mBody.innerHTML = `
+ <b>Status:</b> ${i.status.toUpperCase()}<br>
+ <b>Exchange:</b> ${i.exchange}<br>
+ <b>Issue Period:</b> ${i.issue_start} – ${i.issue_end}<br>
+ <b>Price Band:</b> ${i.price_band}<br>
+ <b>Lot Size:</b> ${i.lot_size}<br>
+ <b>Issue Size:</b> ${i.issue_size}<br>
+ <b>GMP:</b> ${i.gmp}<br><br>
+ <b>About Company:</b><br>${i.description}
+ `;
+ backdrop.style.display="flex";
 }
+function closeModal(){backdrop.style.display="none"}
+
+search.oninput = render;
+status.onchange = render;
+render();
 </script>
-
 </body>
 </html>
